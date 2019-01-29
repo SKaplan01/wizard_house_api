@@ -1,13 +1,24 @@
 const express = require('express');
 const db = require('../db');
+const Wizard = require('../models/wizard');
 
 const router = new express.Router();
 
 // select all wizards, returns id, name, house, image_url
 router.get('/', async function(req, res, next) {
   try {
-    const results = await db.query(`SELECT * FROM wizards`);
-    return res.json({ wizards: results.rows });
+    let wizards = await Wizard.getAll();
+    return res.json({ wizards });
+  } catch (err) {
+    return next(err);
+  }
+});
+
+//select a random wizard, returns id, name, house, image_url
+router.get('/random', async function(req, res, next) {
+  try {
+    let wizard = await Wizard.getRandom();
+    return res.json(wizard);
   } catch (err) {
     return next(err);
   }
@@ -16,14 +27,9 @@ router.get('/', async function(req, res, next) {
 //add a new wizard, returns id, name, house, img_url
 router.post('/', async function(req, res, next) {
   try {
-    let { name, house, img_url } = req.body;
-    const result = await db.query(
-      `INSERT INTO wizards (name, house, image_url)
-      VALUES($1, $2, $3)
-      RETURNING id, name, house, image_url`,
-      [name, house, img_url]
-    );
-    return res.json({ wizard: result.rows });
+    let { name, house, image_url } = req.body;
+    let id = await Wizard.create(name, house, image_url);
+    return res.json(id);
   } catch (err) {
     return next(err);
   }
